@@ -200,7 +200,7 @@ func (c *S3) CompleteMultipartUploadRequest(input *CompleteMultipartUploadInput)
 // For information about permissions required to use the multipart upload API,
 // see Multipart Upload API and Permissions (https://docs.aws.amazon.com/AmazonS3/latest/dev/mpuAndPermissions.html).
 //
-// GetBucketLifecycle has the following special errors:
+// CompleteMultipartUpload has the following special errors:
 //
 //    * Error code: EntityTooSmall Description: Your proposed upload is smaller
 //    than the minimum allowed object size. Each part must be at least 5 MB
@@ -7883,6 +7883,13 @@ func (c *S3) PutBucketReplicationRequest(input *PutBucketReplicationInput) (req 
 // When you add the Filter element in the configuration, you must also add the
 // following elements: DeleteMarkerReplication, Status, and Priority.
 //
+// The latest version of the replication configuration XML is V2. XML V2 replication
+// configurations are those that contain the Filter element for rules, and rules
+// that specify S3 Replication Time Control (S3 RTC). In XML V2 replication
+// configurations, Amazon S3 doesn't replicate delete markers. Therefore, you
+// must set the DeleteMarkerReplication element to Disabled. For backward compatibility,
+// Amazon S3 continues to support the XML V1 replication configuration.
+//
 // For information about enabling versioning on a bucket, see Using Versioning
 // (https://docs.aws.amazon.com/AmazonS3/latest/dev/Versioning.html).
 //
@@ -14118,7 +14125,7 @@ type DeleteObjectTaggingInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// Name of the tag.
+	// Name of the object key.
 	//
 	// Key is a required field
 	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
@@ -21474,7 +21481,7 @@ type ListObjectsOutput struct {
 	// is true), you can use the key name in this field as marker in the subsequent
 	// request to get next set of objects. Amazon S3 lists objects in alphabetical
 	// order Note: This element is returned only if you have delimiter request parameter
-	// specified. If response does not include the NextMaker and it is truncated,
+	// specified. If response does not include the NextMarker and it is truncated,
 	// you can use the value of the last Key in the response as the marker in the
 	// subsequent request to get the next set of object keys.
 	NextMarker *string `type:"string"`
@@ -22954,8 +22961,22 @@ func (s *NotificationConfigurationFilter) SetKey(v *KeyFilter) *NotificationConf
 type Object struct {
 	_ struct{} `type:"structure"`
 
-	// The entity tag is an MD5 hash of the object. ETag reflects only changes to
-	// the contents of an object, not its metadata.
+	// The entity tag is a hash of the object. The ETag reflects changes only to
+	// the contents of an object, not its metadata. The ETag may or may not be an
+	// MD5 digest of the object data. Whether or not it is depends on how the object
+	// was created and how it is encrypted as described below:
+	//
+	//    * Objects created by the PUT Object, POST Object, or Copy operation, or
+	//    through the AWS Management Console, and are encrypted by SSE-S3 or plaintext,
+	//    have ETags that are an MD5 digest of their object data.
+	//
+	//    * Objects created by the PUT Object, POST Object, or Copy operation, or
+	//    through the AWS Management Console, and are encrypted by SSE-C or SSE-KMS,
+	//    have ETags that are not an MD5 digest of their object data.
+	//
+	//    * If an object is created by either the Multipart Upload or Part Copy
+	//    operation, the ETag is not an MD5 digest, regardless of the method of
+	//    encryption.
 	ETag *string `type:"string"`
 
 	// The name that you assign to an object. You use the object key to retrieve
@@ -26602,7 +26623,7 @@ type PutObjectTaggingInput struct {
 	// Bucket is a required field
 	Bucket *string `location:"uri" locationName:"Bucket" type:"string" required:"true"`
 
-	// Name of the tag.
+	// Name of the object key.
 	//
 	// Key is a required field
 	Key *string `location:"uri" locationName:"Key" min:"1" type:"string" required:"true"`
@@ -29123,7 +29144,7 @@ func (s *StorageClassAnalysisDataExport) SetOutputSchemaVersion(v string) *Stora
 type Tag struct {
 	_ struct{} `type:"structure"`
 
-	// Name of the tag.
+	// Name of the object key.
 	//
 	// Key is a required field
 	Key *string `min:"1" type:"string" required:"true"`
@@ -30230,17 +30251,20 @@ const (
 )
 
 const (
-	// BucketLocationConstraintEu is a BucketLocationConstraint enum value
-	BucketLocationConstraintEu = "EU"
+	// BucketLocationConstraintAfSouth1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintAfSouth1 = "af-south-1"
 
-	// BucketLocationConstraintEuWest1 is a BucketLocationConstraint enum value
-	BucketLocationConstraintEuWest1 = "eu-west-1"
+	// BucketLocationConstraintApEast1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintApEast1 = "ap-east-1"
 
-	// BucketLocationConstraintUsWest1 is a BucketLocationConstraint enum value
-	BucketLocationConstraintUsWest1 = "us-west-1"
+	// BucketLocationConstraintApNortheast1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintApNortheast1 = "ap-northeast-1"
 
-	// BucketLocationConstraintUsWest2 is a BucketLocationConstraint enum value
-	BucketLocationConstraintUsWest2 = "us-west-2"
+	// BucketLocationConstraintApNortheast2 is a BucketLocationConstraint enum value
+	BucketLocationConstraintApNortheast2 = "ap-northeast-2"
+
+	// BucketLocationConstraintApNortheast3 is a BucketLocationConstraint enum value
+	BucketLocationConstraintApNortheast3 = "ap-northeast-3"
 
 	// BucketLocationConstraintApSouth1 is a BucketLocationConstraint enum value
 	BucketLocationConstraintApSouth1 = "ap-south-1"
@@ -30251,17 +30275,56 @@ const (
 	// BucketLocationConstraintApSoutheast2 is a BucketLocationConstraint enum value
 	BucketLocationConstraintApSoutheast2 = "ap-southeast-2"
 
-	// BucketLocationConstraintApNortheast1 is a BucketLocationConstraint enum value
-	BucketLocationConstraintApNortheast1 = "ap-northeast-1"
-
-	// BucketLocationConstraintSaEast1 is a BucketLocationConstraint enum value
-	BucketLocationConstraintSaEast1 = "sa-east-1"
+	// BucketLocationConstraintCaCentral1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintCaCentral1 = "ca-central-1"
 
 	// BucketLocationConstraintCnNorth1 is a BucketLocationConstraint enum value
 	BucketLocationConstraintCnNorth1 = "cn-north-1"
 
+	// BucketLocationConstraintCnNorthwest1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintCnNorthwest1 = "cn-northwest-1"
+
+	// BucketLocationConstraintEu is a BucketLocationConstraint enum value
+	BucketLocationConstraintEu = "EU"
+
 	// BucketLocationConstraintEuCentral1 is a BucketLocationConstraint enum value
 	BucketLocationConstraintEuCentral1 = "eu-central-1"
+
+	// BucketLocationConstraintEuNorth1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintEuNorth1 = "eu-north-1"
+
+	// BucketLocationConstraintEuSouth1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintEuSouth1 = "eu-south-1"
+
+	// BucketLocationConstraintEuWest1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintEuWest1 = "eu-west-1"
+
+	// BucketLocationConstraintEuWest2 is a BucketLocationConstraint enum value
+	BucketLocationConstraintEuWest2 = "eu-west-2"
+
+	// BucketLocationConstraintEuWest3 is a BucketLocationConstraint enum value
+	BucketLocationConstraintEuWest3 = "eu-west-3"
+
+	// BucketLocationConstraintMeSouth1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintMeSouth1 = "me-south-1"
+
+	// BucketLocationConstraintSaEast1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintSaEast1 = "sa-east-1"
+
+	// BucketLocationConstraintUsEast2 is a BucketLocationConstraint enum value
+	BucketLocationConstraintUsEast2 = "us-east-2"
+
+	// BucketLocationConstraintUsGovEast1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintUsGovEast1 = "us-gov-east-1"
+
+	// BucketLocationConstraintUsGovWest1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintUsGovWest1 = "us-gov-west-1"
+
+	// BucketLocationConstraintUsWest1 is a BucketLocationConstraint enum value
+	BucketLocationConstraintUsWest1 = "us-west-1"
+
+	// BucketLocationConstraintUsWest2 is a BucketLocationConstraint enum value
+	BucketLocationConstraintUsWest2 = "us-west-2"
 )
 
 const (

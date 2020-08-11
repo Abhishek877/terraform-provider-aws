@@ -9516,8 +9516,7 @@ func (c *Organizations) ListHandshakesForAccountRequest(input *ListHandshakesFor
 // of results even when there are more results available. The NextToken response
 // parameter value is null only when there are no more results to display.
 //
-// This operation can be called only from the organization's master account
-// or by a member account that is a delegated administrator for an AWS service.
+// This operation can be called from any account in the organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -14842,6 +14841,9 @@ type CreateAccountStatus struct {
 	//    * ACCOUNT_LIMIT_EXCEEDED: The account could not be created because you
 	//    have reached the limit on the number of accounts in your organization.
 	//
+	//    * CONCURRENT_ACCOUNT_MODIFICATION: You already submitted a request with
+	//    the same information.
+	//
 	//    * EMAIL_ALREADY_EXISTS: The account could not be created because another
 	//    AWS account with that email address already exists.
 	//
@@ -14857,6 +14859,12 @@ type CreateAccountStatus struct {
 	//
 	//    * INTERNAL_FAILURE: The account could not be created because of an internal
 	//    failure. Try again later. If the problem persists, contact Customer Support.
+	//
+	//    * MISSING_BUSINESS_VALIDATION: The AWS account that owns your organization
+	//    has not received Business Validation.
+	//
+	//    * MISSING_PAYMENT_INSTRUMENT: You must configure the master account with
+	//    a valid payment method, such as a credit card.
 	FailureReason *string `type:"string" enum:"CreateAccountFailureReason"`
 
 	// If the account was created successfully, the unique identifier (ID) of the
@@ -22127,6 +22135,12 @@ const (
 
 	// CreateAccountFailureReasonGovcloudAccountAlreadyExists is a CreateAccountFailureReason enum value
 	CreateAccountFailureReasonGovcloudAccountAlreadyExists = "GOVCLOUD_ACCOUNT_ALREADY_EXISTS"
+
+	// CreateAccountFailureReasonMissingBusinessValidation is a CreateAccountFailureReason enum value
+	CreateAccountFailureReasonMissingBusinessValidation = "MISSING_BUSINESS_VALIDATION"
+
+	// CreateAccountFailureReasonMissingPaymentInstrument is a CreateAccountFailureReason enum value
+	CreateAccountFailureReasonMissingPaymentInstrument = "MISSING_PAYMENT_INSTRUMENT"
 )
 
 const (
